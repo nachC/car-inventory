@@ -10,12 +10,13 @@ const userRouter = express.Router();
 */
 userRouter.route('/register')
   .post(validator.validateInput, (req, res, next) => {
+    // search in the collection for a user with this username
     User.findOne({ username: req.body.username })
       .then(user => {
         if (user) {
           let err = new Error('Username already exists');
           err.status = 400;
-          return res.json({ error: err.status, message: err.message });
+          return next(err);
         } else {
           const newUser = new User({
             username: req.body.username,
@@ -26,7 +27,11 @@ userRouter.route('/register')
             if (err) {
               return next(err);
             } else {
-              return res.status(200).end('redirect to login');
+              // if created successfully respond with the username and redirect path
+              return res.status(200).json({
+                redirect: 'login',
+                username: newUser.username
+              });
             }
           });
         }
@@ -47,20 +52,26 @@ userRouter.route('/login')
     User.findOne({ username })
       .then(user => {
         if (!user) {
+          // if username doesn't exists pass error to next()
           let err = new Error('Incorrect username');
-          err.status = 404;
-          return res.json({ error: err.status, message: err.message });
+          err.status = 401;
+          return next(err);
         }
 
         bcrypt.compare(password, user.password)
           .then(matched => {
             if (!matched) {
+              // if password doesn't match pass error to next()
               let err = new Error('Incorrect password');
-              err.status = 404;
-              return res.json({ error: err.status, message: err.message });
+              err.status = 401;
+              return next(err);
             }
             req.session.id = user.id;
-            res.status(200).end('Logged in - redirect to main page');
+            // on successfull login return json with username
+            res.status(200).json({
+              redirect: 'home',
+              username: user.username
+            });
           })
           .catch(err => next(err));
       })
@@ -73,7 +84,9 @@ userRouter.route('/login')
 userRouter.route('/logout')
   .get((req, res, next) => {
     req.session.reset();
-    res.status(200).end('redirect to main page');
+    res.status(200).json({
+      redirect: 'login'
+    });
   });
 
 

@@ -10,13 +10,11 @@ carRouter.route('/')
       .then(cars => {
         if (!cars.length) {
           let err = new Error('No cars found');
-          err.status = 404;
-          res.setHeader('Content-Type', 'Application/json');
-          return res.json({ error: err.status, message: err.message });
+          err.status = 400;
+          return next(err);
         }
         let carsData = { cars };
         res.statusCode = 200;
-        res.setHeader('Content-Type', 'Application/json');
         res.json(carsData);
       }, (err) => next(err))
       .catch(err => next(err));
@@ -25,7 +23,6 @@ carRouter.route('/')
     Cars.create(req.body)
       .then(car => {
         res.statusCode = 200;
-        res.setHeader('Content-Type', 'Application/json');
         res.json(car);
       }, err => next(err))
       .catch(err => next(err));
@@ -37,12 +34,10 @@ carRouter.route('/:id')
       .then((car) => {
         if (!car) {
           let err = new Error('Car not found');
-          err.status = 404;
-          res.setHeader('Content-Type', 'Application/json');
+          err.status = 401;
           return next(err);
         }
         res.statusCode = 200;
-        res.setHeader('Content-Type', 'Application/json');
         res.json(car);
       }, err => next(err))
       .catch(err => next(err));
@@ -51,7 +46,6 @@ carRouter.route('/:id')
     Cars.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true })
       .then((car) => {
         res.statusCode = 200;
-        res.setHeader('Content-Type', 'Application/json');
         res.json(car);
       }, err => next(err))
       .catch(err => next(err));
@@ -60,7 +54,6 @@ carRouter.route('/:id')
     Cars.findByIdAndRemove(req.params.id)
       .then((car) => {
         res.statusCode = 200;
-        res.setHeader('Content-Type', 'Application/json');
         res.json(car);
       })
   });
